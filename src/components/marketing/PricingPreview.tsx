@@ -1,5 +1,15 @@
-import { Sparkles, Crown, Building2, Briefcase, Check } from "lucide-react";
+import React from "react";
+import {
+  Sparkles,
+  Crown,
+  Building2,
+  Briefcase,
+  Check,
+  Link2,
+  ShieldCheck,
+} from "lucide-react";
 import { LinkButton } from "../ui/LinkButton";
+import FeaturedRunningOutline from "../ui/FeatureRunningOutline";
 
 type Plan = {
   tag: string;
@@ -16,56 +26,81 @@ type Plan = {
 };
 
 export default function PricingSection() {
-  const plans: Plan[] = [
+  const studentPlans: Plan[] = [
     {
-      tag: "Best for getting started",
+      tag: "Free to start",
       tagTone: "neutral",
       icon: <Sparkles className="h-5 w-5" />,
-      name: "Student Free",
-      description: "Perfect for students trying ReadMyStudent for the first time.",
+      name: "Free Tier",
+      description: "Create an account and send your first requests at no cost.",
       price: "$0",
       bullets: [
-        "30-day free access",
-        "2 faculty recommendation letters",
-        "4 secure application links",
-        "Consent-based sharing",
-        "Trial ends when limits reached or 30 days pass",
+        "Free signup for everyone",
+        "First 3 recommendation links included",
+        "Each link is single-use and expires after submission",
+        "Consent-based sharing (student controls access)",
+        "Audit trail for when links are accessed",
       ],
-      cta: { label: "Start Free Trial", href: "/signup?role=student", variant: "primary" },
+      cta: { label: "Start Free", href: "/signup?role=student" },
     },
     {
-      tag: "Coming Soon",
+      tag: "Flexible & simple",
+      tagTone: "neutral",
+      icon: <Link2 className="h-5 w-5" />,
+      name: "Pay-As-You-Go",
+      description: "Only pay when you need more application submissions.",
+      price: "$5",
+      priceSuffix: "/ link",
+      bullets: [
+        "Starts after your first 3 free links",
+        "Every link is fresh, unique, and single-use",
+        "Once submitted → link expires automatically",
+        "Stops link sharing and unauthorized reuse",
+        "Perfect for small application cycles",
+      ],
+      cta: { label: "Buy Links", href: "/signup?role=student" },
+    },
+    {
+      tag: "Best value for heavy applications",
       tagTone: "gold",
       icon: <Crown className="h-5 w-5" />,
-      name: "Student Plus",
-      description: "For power users who need higher limits and priority help.",
-      price: "$39",
-      priceSuffix: "/ year",
+      name: "Application Sprint",
+      description:
+        "Premium plan for application season — built to be abuse-resistant and admissions-grade.",
+      price: "$399",
+      priceSuffix: "/ month",
       bullets: [
-        "Higher recommendation letter limits",
-        "More secure application links per year",
-        "Longer access to stored RLs",
-        "Extended application history",
-        "Priority support",
+        "Up to 100 single-use recommendation links",
+        "Ends when 100 links are generated OR 30 days pass",
+        "Every submission burns one link credit (no replays)",
+        "No forwarding, reuse, or duplicate submissions",
+        "Best for grad, med, law, PhD, or multi-school cycles",
       ],
-      cta: { label: "Notify Me", href: "/contact?topic=student-plus", variant: "orange" },
+      cta: {
+        label: "Start Sprint",
+        href: "/signup?role=student&plan=sprint",
+      },
       featured: true,
     },
+  ];
+
+  const viewerPlans: Plan[] = [
     {
       tag: "For verified institutions",
       tagTone: "neutral",
       icon: <Building2 className="h-5 w-5" />,
       name: "University Access",
-      description: "Secure, read-only access to student-approved recommendation letters.",
+      description:
+        "Secure, read-only access to student-approved recommendation letters.",
       price: "Free",
       bullets: [
         "Free access for verified university domains",
-        "View RLs only after student consent",
-        "No more managing PDFs & email attachments",
-        "Audit trail for when links accessed",
+        "View only after student consent",
+        "No PDFs or email attachments",
+        "Audit trail for access events",
         "Simple, frictionless viewer UI",
       ],
-      cta: { label: "Verify University Email", href: "/signup?role=university", variant: "primary" },
+      cta: { label: "Verify University Email", href: "/signup?role=university" },
     },
     {
       tag: "For recruiters & hiring managers",
@@ -76,59 +111,61 @@ export default function PricingSection() {
       price: "Free",
       bullets: [
         "Free access for verified company emails",
-        "Use secure links shared by candidates",
-        "No storage of personal data beyond needed",
-        "Simple, frictionless viewer UI",
-        "Audit trail for compliance",
+        "Secure links shared by candidates",
+        "Minimal data retention",
+        "Compliance-friendly audit trail",
+        "Instant viewer UI",
       ],
-      cta: { label: "Verify Work Email", href: "/signup?role=employer", variant: "primary" },
+      cta: { label: "Verify Work Email", href: "/signup?role=employer" },
     },
   ];
 
   return (
     <section id="pricing" className="bg-[#fbfbf8]">
       <div className="mx-auto max-w-7xl px-6 py-16 md:py-24">
-        {/* badge */}
-        <div className="flex justify-center">
-          <span className="inline-flex items-center rounded-full bg-[#e9e9ef] px-4 py-2 text-xs font-semibold text-[#101c5a]">
-            Pricing
-          </span>
-        </div>
-
-        {/* heading */}
-        <div className="mx-auto mt-6 max-w-3xl text-center">
-          <h2 className="font-serif text-4xl md:text-5xl font-semibold tracking-tight text-[#0a154a] leading-tight">
-            Start Free. <span className="italic text-amber-500">Upgrade When</span>{" "}
-            <span className="italic text-amber-500">Ready.</span>
+        {/* Heading */}
+        <div className="mx-auto max-w-3xl text-center">
+          <h2 className="font-serif text-4xl md:text-5xl font-semibold text-[#0a2e1c]">
+            Simple Pricing for{" "}
+            <span className="italic text-amber-500">Single-Use</span>{" "}
+            Recommendation Links
           </h2>
-          <p className="mt-4 text-sm md:text-base leading-relaxed text-[#56608b]">
-            Start free. Upgrade only when you need more recommendations and applications.
+
+          <p className="mt-4 text-[#5f7f6f]">
+            Start free. Pay per link when needed. Sprint when applying everywhere.
           </p>
+
+          {/* Core rule */}
+          <div className="mt-6 rounded-2xl border border-[#0b4726]/15 bg-[#eaf3ee] px-5 py-4 text-left">
+            <div className="flex gap-3">
+              <span className="h-9 w-9 rounded-xl bg-[#0b4726]/10 grid place-items-center text-[#0b4726]">
+                <ShieldCheck className="h-5 w-5" />
+              </span>
+              <div>
+                <div className="font-semibold text-[#0a2e1c] text-sm">
+                  Core Rule: every recommendation requires a new one-time-use link
+                </div>
+                <div className="text-sm text-[#5f7f6f] mt-1">
+                  Links expire immediately after submission — no reuse, no
+                  forwarding, no ambiguity.
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* plans */}
-        <div className="mt-14 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-          {plans.map((p) => (
+        {/* Student plans */}
+        <div className="mt-14 grid grid-cols-1 md:grid-cols-3 gap-6">
+          {studentPlans.map((p) => (
             <PlanCard key={p.name} plan={p} />
           ))}
         </div>
 
-        {/* footer note */}
-        <div className="mt-14 text-center">
-          <p className="text-sm text-[#56608b]">
-            <span className="font-semibold text-[#0a154a]">Faculty members</span>{" "}
-            — your access is completely free. Join to manage recommendation requests effortlessly.
-          </p>
-
-          <div className="mt-6 flex justify-center">
-            <LinkButton
-              href="/signup?role=faculty"
-              variant="secondary"
-              className="rounded-xl px-6 bg-white border border-black/10 hover:bg-[#f6f5ee]"
-            >
-              Register as Faculty
-            </LinkButton>
-          </div>
+        {/* Viewer plans */}
+        <div className="mt-14 grid grid-cols-1 md:grid-cols-2 gap-6">
+          {viewerPlans.map((p) => (
+            <PlanCard key={p.name} plan={p} />
+          ))}
         </div>
       </div>
     </section>
@@ -138,107 +175,91 @@ export default function PricingSection() {
 function PlanCard({ plan }: { plan: Plan }) {
   const isFeatured = !!plan.featured;
 
-  const wrapperClass = [
-    "rounded-2xl border border-black/10 shadow-[0_10px_30px_rgba(15,23,42,0.04)]",
-    "px-7 py-8 flex flex-col",
-    "transition-all duration-300 ease-out",
-    isFeatured
-      ? "bg-[#0b1553] text-white border-transparent scale-[1.02]"
-      : "bg-white",
-    !isFeatured ? "hover:scale-[1.02] hover:border-amber-300 hover:shadow-[0_20px_50px_rgba(245,197,66,0.18)]" : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
+  if (isFeatured) {
+    return (
+      <div className="relative">
+        {/* BORDER ZONE LAYER (behind the panel) */}
+        <div className="absolute -inset-[3px] rounded-2xl overflow-hidden">
+          <FeaturedRunningOutline />
+        </div>
 
-  const tagClass = [
-    "inline-flex items-center rounded-full px-3 py-1 text-[11px] font-bold",
-    plan.tagTone === "gold"
-      ? "bg-amber-400 text-[#0b1553]"
-      : isFeatured
-      ? "bg-white/10 text-white/85 border border-white/15"
-      : "bg-[#eef0f8] text-[#101c5a]",
-  ].join(" ");
+        {/* INNER PANEL (content) */}
+        <div className="relative z-10 rounded-2xl bg-[#0b4726] text-white px-7 py-8 flex flex-col shadow-xl">
+          <div className="text-xs font-bold mb-4 text-amber-300">{plan.tag}</div>
 
-  const iconTileClass = [
-    "h-12 w-12 rounded-2xl grid place-items-center border border-black/5",
-    isFeatured ? "bg-white/10 text-amber-300 border-white/15" : "bg-[#eef0f8] text-[#0b1553]",
-  ].join(" ");
+          <div className="h-12 w-12 rounded-2xl grid place-items-center bg-white/10 text-amber-200 mb-4">
+            {plan.icon}
+          </div>
 
-  const nameClass = [
-    "mt-6 font-serif text-xl font-semibold",
-    isFeatured ? "text-white" : "text-[#0a154a]",
-  ].join(" ");
+          <div className="font-serif text-xl font-semibold">{plan.name}</div>
+          <p className="mt-2 text-sm text-white/80">{plan.description}</p>
 
-  const descClass = [
-    "mt-2 text-sm leading-relaxed",
-    isFeatured ? "text-white/70" : "text-[#5f6a93]",
-  ].join(" ");
+          <div className="mt-6 font-serif text-3xl font-semibold">
+            {plan.price}
+            {plan.priceSuffix && (
+              <span className="text-sm ml-1 text-white/70">{plan.priceSuffix}</span>
+            )}
+          </div>
 
-  const priceClass = [
-    "mt-6 font-serif text-3xl font-semibold",
-    isFeatured ? "text-white" : "text-[#0b1553]",
-  ].join(" ");
+          <ul className="mt-6 space-y-3 text-sm text-white/90">
+            {plan.bullets.map((b) => (
+              <li key={b} className="flex gap-3">
+                <Check className="h-4 w-4 text-amber-300 mt-0.5" />
+                <span>{b}</span>
+              </li>
+            ))}
+          </ul>
 
-  const listText = isFeatured ? "text-white/85" : "text-[#56608b]";
-
-  return (
-    <div className={wrapperClass}>
-      {/* tag */}
-      <div className={tagClass}>{plan.tag}</div>
-
-      {/* icon */}
-      <div className="mt-4">
-        <div className={iconTileClass}>{plan.icon}</div>
-      </div>
-
-      {/* content */}
-      <div className={nameClass}>{plan.name}</div>
-      <div className={descClass}>{plan.description}</div>
-
-      <div className={priceClass}>
-        {plan.price}
-        {plan.priceSuffix ? (
-          <span className={`ml-1 text-sm font-semibold ${isFeatured ? "text-white/70" : "text-[#56608b]"}`}>
-            {plan.priceSuffix}
-          </span>
-        ) : null}
-      </div>
-
-      <ul className={`mt-6 space-y-3 text-sm ${listText}`}>
-        {plan.bullets.map((b) => (
-          <li key={b} className="flex items-start gap-3">
-            <span
-              className={[
-                "mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full",
-                isFeatured ? "bg-amber-400/15 text-amber-300" : "text-amber-500",
-              ].join(" ")}
+          <div className="mt-8">
+            <LinkButton
+              href={plan.cta.href}
+              variant="gold"
+              className="w-full justify-center rounded-xl bg-amber-500 text-[#0b4726] hover:bg-amber-400"
             >
-              <Check className="h-4 w-4" />
-            </span>
+              {plan.cta.label}
+            </LinkButton>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // non-featured stays simple
+  return (
+    <div className="rounded-2xl bg-white border border-[#0b4726]/10 px-7 py-8 flex flex-col transition-all duration-300 hover:scale-[1.02]">
+      <div className="text-xs font-bold mb-4 text-[#0b4726]">{plan.tag}</div>
+
+      <div className="h-12 w-12 rounded-2xl grid place-items-center bg-[#eaf3ee] text-[#0b4726] mb-4">
+        {plan.icon}
+      </div>
+
+      <div className="font-serif text-xl font-semibold text-[#0a2e1c]">{plan.name}</div>
+      <p className="mt-2 text-sm text-[#5f7f6f]">{plan.description}</p>
+
+      <div className="mt-6 font-serif text-3xl font-semibold text-[#0b4726]">
+        {plan.price}
+        {plan.priceSuffix && (
+          <span className="text-sm ml-1 font-semibold text-[#5f7f6f]">{plan.priceSuffix}</span>
+        )}
+      </div>
+
+      <ul className="mt-6 space-y-3 text-sm text-[#5f7f6f]">
+        {plan.bullets.map((b) => (
+          <li key={b} className="flex gap-3">
+            <Check className="h-4 w-4 text-amber-500 mt-0.5" />
             <span>{b}</span>
           </li>
         ))}
       </ul>
 
-      {/* CTA */}
       <div className="mt-8">
-        {isFeatured ? (
-          <LinkButton
-            href={plan.cta.href}
-            variant="gold"
-            className="w-full justify-center rounded-xl bg-amber-500 text-[#0b1553] hover:bg-amber-400"
-          >
-            {plan.cta.label}
-          </LinkButton>
-        ) : (
-          <LinkButton
-            href={plan.cta.href}
-            variant="primary"
-            className="w-full justify-center rounded-xl bg-[#0b1553] hover:opacity-95"
-          >
-            {plan.cta.label}
-          </LinkButton>
-        )}
+        <LinkButton
+          href={plan.cta.href}
+          variant="primary"
+          className="w-full justify-center rounded-xl bg-[#0b4726] text-white hover:opacity-95"
+        >
+          {plan.cta.label}
+        </LinkButton>
       </div>
     </div>
   );

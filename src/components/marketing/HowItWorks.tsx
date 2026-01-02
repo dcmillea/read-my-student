@@ -80,18 +80,18 @@ export default function HowItWorks() {
       <div className="mx-auto max-w-7xl px-6 py-16 md:py-24">
         {/* Top badge */}
         <div className="flex justify-center">
-          <span className="inline-flex items-center rounded-full bg-[#e9e9ef] px-4 py-2 text-xs font-semibold text-[#101c5a]">
+          <span className="inline-flex items-center rounded-full bg-[#e9e9ef] px-4 py-2 text-xs font-semibold text-[#247037]">
             How It Works
           </span>
         </div>
 
         {/* Title + subtitle */}
         <div className="mx-auto mt-6 max-w-3xl text-center">
-          <h2 className="font-serif text-4xl md:text-5xl font-semibold tracking-tight text-[#0a154a]">
+          <h2 className="font-serif text-4xl md:text-5xl font-semibold tracking-tight text-[#0b4726]">
             Simple Steps for{" "}
             <span className="italic text-amber-500">Everyone</span>
           </h2>
-          <p className="mt-4 text-sm md:text-base leading-relaxed text-[#56608b]">
+          <p className="mt-4 text-sm md:text-base leading-relaxed text-[#0b4726]">
             Whether you&apos;re a student building your academic portfolio or faculty managing
             recommendations, we&apos;ve made the process warm, trustworthy, and professional.
           </p>
@@ -151,11 +151,11 @@ function ToggleButton({
       className={[
         "inline-flex items-center gap-2 rounded-lg px-5 py-3 text-sm font-semibold transition cursor-pointer",
         active
-          ? "bg-[#0b1553] text-white shadow"
-          : "text-[#5b6285] hover:text-[#0b1553]",
+          ? "bg-[#0b4726] text-white shadow"
+          : "text-[#0b4726] hover:text-[#0b1553]",
       ].join(" ")}
     >
-      <span className={active ? "text-white" : "text-[#6a7398]"}>{icon}</span>
+      <span className={active ? "text-white" : "text-[#0b4726]"}>{icon}</span>
       {label}
     </button>
   );
@@ -187,7 +187,7 @@ function StepCard({
   ].join(" ");
 
   const iconTileClassName = [
-    "h-14 w-14 rounded-2xl bg-[#eef0f8] text-[#0b1553]",
+    "h-14 w-14 rounded-2xl bg-[#0b4726] text-amber-400",
     "grid place-items-center shadow-inner border border-black/5",
     "transition-colors duration-300 group-hover:bg-amber-50",
   ].join(" ");
@@ -202,11 +202,11 @@ function StepCard({
       {/* icon tile */}
       <div className={iconTileClassName}>{icon}</div>
 
-      <h3 className="mt-6 font-serif text-xl font-semibold text-[#0a154a]">
+      <h3 className="mt-6 font-serif text-xl font-semibold text-[#0b4726]">
         {title}
       </h3>
 
-      <p className="mt-3 text-sm leading-relaxed text-[#5f6a93]">{body}</p>
+      <p className="mt-3 text-sm leading-relaxed text-[#0b4726]">{body}</p>
     </div>
   );
 }

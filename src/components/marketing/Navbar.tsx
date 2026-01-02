@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 import { LinkButton } from "../ui/LinkButton";
+import LogoOfficial from "../../../public/image (1)-Picsart-BackgroundRemover.png";
 
 const navLinks = [
   { label: "How it Works", href: "/how-it-works" },
@@ -16,40 +18,24 @@ export default function Navbar() {
 
   return (
     <header className="fixed top-0 inset-x-0 z-50 bg-[#d9dbe3]">
-      <div className="mx-auto max-w-7xl px-6">
-        <div className="h-16 flex items-center justify-between">
+      <div className="w-full mx-auto flex justify-center items-center lg:block"> { /* max-w-7xl mx-auto px-6 */}
+        <div className="h-40 flex items-center justify-between">
           {/* Left: Logo */}
-          <Link href="/" className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-[#0b1553] grid place-items-center shadow-sm">
-              {/* simple cap icon */}
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                className="text-amber-400"
-              >
-                <path
-                  d="M12 3 2 8l10 5 10-5-10-5Z"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M6 10v6c0 2 4 4 6 4s6-2 6-4v-6"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
-            <span className="font-serif text-lg font-semibold text-[#0b1553]">
+          <Link href="/" className="flex items-center gap-3 pt-2">
+            <Image
+              src={LogoOfficial}
+              alt="ReadMyStudent logo"
+              width={450}
+              height={400}
+              priority
+            />
+            {/* <span className={`${satisfy.className} text-3xl font-semibold scale-x-[1.16] text-[#0b1553]`}>
               ReadMyStudent
-            </span>
+            </span> */}
           </Link>
 
           {/* Center: Nav links */}
-          <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-[#5a6487]">
+          {/* <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-[#5a6487]">
             {navLinks.map((l) => (
               <Link
                 key={l.href}
@@ -59,10 +45,10 @@ export default function Navbar() {
                 {l.label}
               </Link>
             ))}
-          </nav>
+          </nav> */}
 
           {/* Right: Actions */}
-          <div className="hidden md:flex items-center gap-6">
+          {/* <div className="hidden md:flex items-center gap-6">
             <Link
               href="/signin"
               className="text-sm font-semibold text-[#0b1553]/80 hover:text-[#0b1553] transition-colors"
@@ -78,10 +64,10 @@ export default function Navbar() {
             >
               Get Started
             </LinkButton>
-          </div>
+          </div> */}
 
           {/* Mobile menu button */}
-          <button
+          {/* <button
             type="button"
             className="md:hidden inline-flex items-center justify-center h-10 w-10 rounded-xl border border-black/10 bg-white/40 text-[#0b1553]"
             aria-label="Open menu"
@@ -92,11 +78,11 @@ export default function Navbar() {
               <span className="h-0.5 w-5 bg-[#0b1553]" />
               <span className="h-0.5 w-5 bg-[#0b1553]" />
             </div>
-          </button>
+          </button> */}
         </div>
 
         {/* Mobile dropdown */}
-        {open ? (
+        {/* {open ? (
           <div className="md:hidden pb-5">
             <div className="mt-2 rounded-2xl bg-white/50 border border-black/10 backdrop-blur px-4 py-4">
               <nav className="flex flex-col gap-3 text-sm font-semibold text-[#5a6487]">
@@ -132,7 +118,7 @@ export default function Navbar() {
               </div>
             </div>
           </div>
-        ) : null}
+        ) : null} */}
       </div>
 
       {/* subtle bottom divider like the screenshot */}

@@ -38,3 +38,45 @@ body {
   animation: marqueeX linear infinite;
   animation-duration: var(--marquee-duration, 24s);
 }
+
+/* Smooth “runner” outline behind the card content - GOOGLE AI OUTLINE - */
+.featured-outline {
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  display: block;
+}
+
+.featured-outline .runner {
+  stroke-dasharray: 110 890;
+  animation: featured-run 2.6s linear infinite;
+}
+
+.featured-outline .runner2 {
+  stroke-dasharray: 110 890;
+  animation: featured-run 2.6s linear infinite;
+  animation-delay: -1.3s; /* second runner opposite side */
+  opacity: 0.9;
+}
+
+.featured-outline .glow {
+  stroke-dasharray: 180 820;
+  animation: featured-run 3.4s linear infinite;
+  opacity: 0.45;
+  filter: blur(0.6px);
+}
+
+@keyframes featured-run {
+  to {
+    stroke-dashoffset: -1000;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .featured-outline .runner,
+  .featured-outline .runner2,
+  .featured-outline .glow {
+    animation: none;
+  }
+}
+

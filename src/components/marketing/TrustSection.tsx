@@ -75,10 +75,10 @@ export default function TrustSection() {
 
         {/* heading */}
         <div className="mx-auto mt-6 max-w-3xl text-center">
-          <h2 className="font-serif text-4xl md:text-5xl font-semibold tracking-tight text-[#0a154a]">
+          <h2 className="font-serif text-4xl md:text-5xl font-semibold tracking-tight text-[#0b4726]">
             Built for <span className="italic text-amber-500">Privacy First</span>
           </h2>
-          <p className="mt-4 text-sm md:text-base leading-relaxed text-[#56608b]">
+          <p className="mt-4 text-sm md:text-base leading-relaxed text-[#0b4726]">
             Security and compliance aren&apos;t afterthoughts—they&apos;re first-class requirements baked
             into every feature.
           </p>

@@ -12,6 +12,7 @@ interface LinkButtonProps {
   replace?: boolean;
   scroll?: boolean;
   prefetch?: boolean;
+  onClick?: () => void;
 }
 
 export function LinkButton({
@@ -20,11 +21,13 @@ export function LinkButton({
   variant,
   size,
   className,
+  onClick,
   ...linkProps
 }: LinkButtonProps) {
   return (
     <Link
       href={href}
+      onClick={onClick}
       className={buttonClassName(variant, size, className)}
       {...linkProps}
     >

@@ -1,4 +1,4 @@
-export type ButtonVariant = "primary" | "secondary" | "ghost" | "amber" | "gold";
+export type ButtonVariant = "primary" | "secondary" | "ghost" | "amber" | "gold" | "green";
 export type ButtonSize = "sm" | "md" | "lg";
 
 export const buttonBase = "inline-flex items-center justify-center rounded-md font-medium transition focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50";
@@ -17,6 +17,8 @@ export const buttonVariants: Record<ButtonVariant, string> = {
     shadow-[0_6px_20px_rgba(245,197,66,0.35)]
     ring-1 ring-[#f5c542]/40
   `,
+  green:
+    "bg-[#0b5315] text-white hover:bg-[#146b22] ring-1 ring-[#0b5315]/40 shadow-[0_6px_20px_rgba(11,83,21,0.25)]",
 };
 
 export const buttonSizes: Record<ButtonSize, string> = {
