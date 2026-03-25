@@ -13,7 +13,7 @@
  *     1. SHA-256 hash recipient email — plaintext is never stored in the DB.
  *        The plaintext is retrieved from Stripe session metadata at approval time.
  *     2. NO delivery token is generated here — token is created only when faculty approves.
- *     3. Set payment_status = 'pending_approval'.
+ *     3. Set payment_status = 'pending'.
  *     4. Email faculty asking them to APPROVE or REJECT the delivery.
  *
  * Required delivery_links columns (run once in Supabase SQL editor if missing):
@@ -167,7 +167,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
       recipient_email_hash: recipientEmailHash,
       school_name,
       student_user_id: meta.student_user_id,
-      payment_status: "pending_approval",
+      payment_status: "pending",
       stripe_checkout_session_id: session.id,
     })
     .select("id")

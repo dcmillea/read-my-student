@@ -69,40 +69,41 @@ export type FacultyProfileRow = {
   city: string | null;
   postal_code: string | null;
   street: string | null;
-  // new columns (SQL migration required — see below)
-  prefix: string | null;
-  first_name: string | null;
-  last_name: string | null;
-  phone: string | null;
-  email: string | null;
+  // asset columns
   signature_storage_path: string | null;
   logo_storage_path: string | null;
-  sign_off: string | null;
   /** ISO timestamp of the last logo upload; nulled by the cron after the 1-year retention window */
   logo_uploaded_at: string | null;
   /** ISO timestamp of the last signature upload; nulled by the cron after the 1-year retention window */
   signature_uploaded_at: string | null;
+  // new columns
+  prefix: string | null;
 };
 
 // ─── Mapping helpers ──────────────────────────────────────────────────────────
 
 /** Convert a DB row into a RecommenderProfile for form initialisation. */
-export function dbRowToProfile(row: FacultyProfileRow): RecommenderProfile {
+export function dbRowToProfile(
+  row: FacultyProfileRow,
+  authEmail?: string | null,
+  firstName?: string | null,
+  lastName?: string | null,
+): RecommenderProfile {
   return {
     prefix: row.prefix ?? "",
-    firstName: row.first_name ?? "",
-    lastName: row.last_name ?? "",
+    firstName: firstName ?? "",
+    lastName: lastName ?? "",
     organization: row.institution ?? "",
     department: row.department ?? "",
     title: row.title ?? "",
-    email: row.email ?? "",
-    phone: row.phone ?? "",
+    email: authEmail ?? "",
+    phone: "",
     country: row.country ?? "",
     state: row.state ?? "",
     city: row.city ?? "",
     postalCode: row.postal_code ?? "",
     street: row.street ?? "",
-    signOff: row.sign_off ?? "Sincerely,",
+    signOff: "Sincerely,",
     // `relationship` is intentionally omitted – it is per-letter, not a profile field.
   };
 }
@@ -113,18 +114,13 @@ export function profileFormToDbRow(
 ): Partial<FacultyProfileRow> {
   return {
     prefix: form.prefix || null,
-    first_name: form.firstName || null,
-    last_name: form.lastName || null,
     institution: form.organization || null,
     department: form.department || null,
     title: form.title || null,
-    email: form.email || null,
-    phone: form.phone || null,
     country: form.country || null,
     state: form.state || null,
     city: form.city || null,
     postal_code: form.postalCode || null,
     street: form.street || null,
-    sign_off: form.signOff || null,
   };
 }

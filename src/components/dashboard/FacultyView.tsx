@@ -32,6 +32,7 @@ import {
 
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { WriteLetterDialog } from "@/components/dashboard/WriteLetterDialog";
+import { createClient as createBrowserClient } from "@/lib/supabase/client";
 import {
   getPendingDeliveries,
   getFacultyRequests,
@@ -59,6 +60,9 @@ export function FacultyView() {
   const [loadingRequests, setLoadingRequests] = useState(true);
   const [facultyProfile, setFacultyProfile] =
     useState<FacultyProfileRow | null>(null);
+  const [authEmail, setAuthEmail] = useState<string | null>(null);
+  const [authFirstName, setAuthFirstName] = useState<string | null>(null);
+  const [authLastName, setAuthLastName] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -73,9 +77,13 @@ export function FacultyView() {
 
   // Verification settings dialog
   const [verificationDialogOpen, setVerificationDialogOpen] = useState(false);
-  const [finalizedLetters, setFinalizedLetters] = useState<FacultyFinalizedLetter[]>([]);
+  const [finalizedLetters, setFinalizedLetters] = useState<
+    FacultyFinalizedLetter[]
+  >([]);
   const [loadingFinalized, setLoadingFinalized] = useState(false);
-  const [previewToggles, setPreviewToggles] = useState<Record<string, boolean>>({});
+  const [previewToggles, setPreviewToggles] = useState<Record<string, boolean>>(
+    {},
+  );
 
   function openVerificationDialog() {
     setVerificationDialogOpen(true);
@@ -84,7 +92,9 @@ export function FacultyView() {
       getFacultyFinalizedLetters().then((letters) => {
         setFinalizedLetters(letters);
         setPreviewToggles(
-          Object.fromEntries(letters.map((l) => [l.letterId, l.studentPreviewEnabled])),
+          Object.fromEntries(
+            letters.map((l) => [l.letterId, l.studentPreviewEnabled]),
+          ),
         );
         setLoadingFinalized(false);
       });
@@ -106,6 +116,16 @@ export function FacultyView() {
       .finally(() => setLoadingRequests(false));
 
     getFacultyProfile().then(setFacultyProfile);
+
+    // Fetch auth email for profile autofill
+    const supabase = createBrowserClient();
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user?.email) setAuthEmail(data.user.email);
+      if (data.user?.user_metadata?.firstName)
+        setAuthFirstName(data.user.user_metadata.firstName);
+      if (data.user?.user_metadata?.lastName)
+        setAuthLastName(data.user.user_metadata.lastName);
+    });
   }, []);
 
   const handleApprove = (id: string) => {
@@ -355,11 +375,19 @@ export function FacultyView() {
                           requestId={req.requestId}
                           savedProfile={
                             facultyProfile
-                              ? dbRowToProfile(facultyProfile)
+                              ? dbRowToProfile(
+                                  facultyProfile,
+                                  authEmail,
+                                  authFirstName,
+                                  authLastName,
+                                )
                               : undefined
                           }
                           onSaveProfile={handleSaveProfile}
                           onDraftSaved={() =>
+                            getFacultyRequests().then(setLetterRequests)
+                          }
+                          onFinalized={() =>
                             getFacultyRequests().then(setLetterRequests)
                           }
                         />
@@ -415,7 +443,10 @@ export function FacultyView() {
       </Card>
 
       {/* Student preview settings dialog */}
-      <Dialog open={verificationDialogOpen} onOpenChange={setVerificationDialogOpen}>
+      <Dialog
+        open={verificationDialogOpen}
+        onOpenChange={setVerificationDialogOpen}
+      >
         <DialogContent className='rounded-2xl sm:max-w-md'>
           <DialogHeader>
             <DialogTitle className='font-serif text-green-900'>
@@ -446,7 +477,8 @@ export function FacultyView() {
                       {letter.studentName}
                     </p>
                     <p className='text-xs text-gray-500'>
-                      Finalized {new Date(letter.finalizedAt).toLocaleDateString()}
+                      Finalized{" "}
+                      {new Date(letter.finalizedAt).toLocaleDateString()}
                     </p>
                   </div>
                   <button
@@ -461,15 +493,15 @@ export function FacultyView() {
                     }
                     className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-900 ${
                       (previewToggles[letter.letterId] ?? false)
-                        ? 'bg-green-900'
-                        : 'bg-gray-200'
+                        ? "bg-green-900"
+                        : "bg-gray-200"
                     }`}
                   >
                     <span
                       className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-transform ${
                         (previewToggles[letter.letterId] ?? false)
-                          ? 'translate-x-5'
-                          : 'translate-x-0'
+                          ? "translate-x-5"
+                          : "translate-x-0"
                       }`}
                     />
                   </button>

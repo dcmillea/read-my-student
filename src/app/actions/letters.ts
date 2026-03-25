@@ -190,6 +190,62 @@ export async function loadDraft(requestId: string): Promise<DraftRow | null> {
   };
 }
 
+/**
+ * Seals a draft letter: sets is_draft = false, status = 'finalized', and
+ * finalized_at = now(). Also advances letter_requests.status to 'in_progress'
+ * so the student knows the letter is ready for delivery.
+ *
+ * Returns an error if the letter is already finalized or doesn't belong to the
+ * calling faculty member.
+ */
+export async function finalizeLetter(
+  requestId: string,
+): Promise<{ success: boolean; letterId?: string; error?: string }> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "Not authenticated." };
+
+  const { data: facultyRow } = await supabaseAdmin
+    .from("faculty")
+    .select("id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (!facultyRow)
+    return { success: false, error: "Faculty record not found." };
+
+  const { data: letter } = await supabaseAdmin
+    .from("letters")
+    .select("id, is_draft")
+    .eq("request_id", requestId)
+    .eq("faculty_id", facultyRow.id)
+    .maybeSingle();
+
+  if (!letter)
+    return { success: false, error: "Letter not found or access denied." };
+  if (!letter.is_draft)
+    return { success: false, error: "This letter has already been finalized." };
+
+  const now = new Date().toISOString();
+
+  const { error: updateError } = await supabaseAdmin
+    .from("letters")
+    .update({ is_draft: false, status: "final", finalized_at: now })
+    .eq("id", letter.id);
+
+  if (updateError) return { success: false, error: updateError.message };
+
+  // Advance request status so the student can proceed to pay for delivery.
+  await supabaseAdmin
+    .from("letter_requests")
+    .update({ status: "in_progress" })
+    .eq("id", requestId);
+
+  return { success: true, letterId: letter.id as string };
+}
+
 // ─── Send Letter Request ─────────────────────────────────────────────────────
 
 export type SendRequestPayload = {
@@ -287,6 +343,7 @@ export async function sendLetterRequest(
       .insert({
         student_id: studentId,
         faculty_id: facultyRow.id,
+        professor_email: payload.professorEmail.trim(),
         course_context: payload.courseContext || null,
         student_note: payload.studentNote || null,
         status: "requested",
@@ -420,7 +477,7 @@ export async function getFinishedLetters(): Promise<FinishedLetter[]> {
   const { data, error } = await supabase
     .from("letters")
     .select(
-      "id, request_id, finalized_at, student_preview_enabled, faculty:faculty_id(first_name, last_name)",
+      "id, request_id, finalized_at, student_preview_enabled, recommender_snapshot",
     )
     .eq("student_id", studentRow.id)
     .eq("is_draft", false)
@@ -429,13 +486,13 @@ export async function getFinishedLetters(): Promise<FinishedLetter[]> {
   if (error || !data) return [];
 
   return data.map((row) => {
-    const fRaw = row.faculty as unknown as
-      | { first_name: string | null; last_name: string | null }[]
-      | { first_name: string | null; last_name: string | null }
-      | null;
-    const f = Array.isArray(fRaw) ? (fRaw[0] ?? null) : fRaw;
+    const snapshot = row.recommender_snapshot as {
+      firstName?: string;
+      lastName?: string;
+    } | null;
     const facultyName =
-      [f?.first_name, f?.last_name].filter(Boolean).join(" ") || "Professor";
+      [snapshot?.firstName, snapshot?.lastName].filter(Boolean).join(" ") ||
+      "Professor";
     return {
       letterId: row.id as string,
       requestId: row.request_id as string,
@@ -467,30 +524,19 @@ export async function getPendingRequests(): Promise<PendingRequest[]> {
 
   const { data, error } = await supabase
     .from("letter_requests")
-    .select(
-      "id, status, created_at, professor_email, faculty:faculty_id(email)",
-    )
+    .select("id, status, created_at, professor_email")
     .eq("student_id", studentRow.id)
     .in("status", ["requested", "in_progress", "invited", "rejected"])
     .order("created_at", { ascending: false });
 
   if (error || !data) return [];
 
-  return data.map((row) => {
-    const fRaw = row.faculty as unknown as
-      | { email: string | null }[]
-      | { email: string | null }
-      | null;
-    const f = Array.isArray(fRaw) ? (fRaw[0] ?? null) : fRaw;
-    const facultyEmail =
-      f?.email ?? (row.professor_email as string | null) ?? "Unknown";
-    return {
-      requestId: row.id as string,
-      facultyEmail,
-      createdAt: row.created_at as string,
-      status: row.status as string,
-    };
-  });
+  return data.map((row) => ({
+    requestId: row.id as string,
+    facultyEmail: (row.professor_email as string | null) ?? "Unknown",
+    createdAt: row.created_at as string,
+    status: row.status as string,
+  }));
 }
 
 // ─── Faculty delivery-approval queries ────────────────────────────────────────
@@ -759,7 +805,7 @@ export async function getPendingDeliveries(): Promise<PendingDelivery[]> {
     .select(
       "id, letter_id, school_name, student_user_id, created_at, letters!inner(faculty_id)",
     )
-    .eq("payment_status", "pending_approval")
+    .eq("payment_status", "pending")
     .eq("letters.faculty_id", facultyRow.id)
     .order("created_at", { ascending: true });
 
@@ -819,7 +865,7 @@ export async function approveDelivery(
     .maybeSingle();
 
   if (!link) return { error: "Delivery not found or access denied." };
-  if ((link.payment_status as string) !== "pending_approval")
+  if ((link.payment_status as string) !== "pending")
     return { error: "This delivery is not awaiting approval." };
 
   // Generate the delivery token now — this is the moment the link becomes live.
@@ -876,7 +922,7 @@ export async function approveDelivery(
   }
 
   if (recipientEmail) {
-    await resend.emails.send({
+    const { error: emailError } = await resend.emails.send({
       from: "ReadMyStudent <notification@readmystudent.com>",
       to: recipientEmail,
       subject: `Recommendation letter available for ${studentFullName}`,
@@ -887,6 +933,13 @@ export async function approveDelivery(
         expiresAt,
       }),
     });
+    if (emailError) {
+      console.error("[approveDelivery] Resend failed:", emailError);
+      return { error: `Delivery approved but email failed: ${emailError.message}` };
+    }
+  } else {
+    console.error("[approveDelivery] No recipient email found for delivery link", deliveryLinkId);
+    return { error: "Delivery approved but could not retrieve the institution email from Stripe." };
   }
 
   return { error: null };
@@ -922,7 +975,7 @@ export async function rejectDelivery(
     .maybeSingle();
 
   if (!link) return { error: "Delivery not found or access denied." };
-  if ((link.payment_status as string) !== "pending_approval")
+  if ((link.payment_status as string) !== "pending")
     return { error: "This delivery is not awaiting approval." };
 
   const { error: updateError } = await supabaseAdmin
@@ -1040,28 +1093,14 @@ export async function getStudentLetterPreview(
   if (letter.is_draft === true) return null;
   if (!letter.student_preview_enabled) return null;
 
-  // Generate short-lived signed URLs so the student can't hotlink the raw paths
-  let logoSignedUrl: string | null = null;
-  let signatureSignedUrl: string | null = null;
-
-  if (letter.letterhead_logo_storage_path) {
-    const { data } = await supabaseAdmin.storage
-      .from("faculty-logos")
-      .createSignedUrl(letter.letterhead_logo_storage_path as string, 3600);
-    logoSignedUrl = data?.signedUrl ?? null;
-  }
-  if (letter.signature_image_storage_path) {
-    const { data } = await supabaseAdmin.storage
-      .from("faculty-signatures")
-      .createSignedUrl(letter.signature_image_storage_path as string, 3600);
-    signatureSignedUrl = data?.signedUrl ?? null;
-  }
-
+  // Signature and logo assets are intentionally withheld from student previews
+  // to protect the professor's signature from being extracted. The preview
+  // renders a "Signature on file" placeholder instead.
   return {
     html: letter.letter_body_html as string | null,
     recommenderSnapshot: letter.recommender_snapshot as RecommenderForm | null,
-    logoSignedUrl,
-    signatureSignedUrl,
+    logoSignedUrl: null,
+    signatureSignedUrl: null,
     finalizedAt: letter.finalized_at as string | null,
   };
 }

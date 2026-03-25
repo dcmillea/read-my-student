@@ -213,7 +213,7 @@ export async function POST(
     .from("letters")
     .update({
       is_draft: false,
-      status: "finalized",
+      status: "final",
       storage_path: pdfStoragePath,
       finalized_at: finalizedAt,
       expires_at: expiresAt,

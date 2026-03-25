@@ -105,7 +105,7 @@ export async function signUpAction(data: RegisterFormValues) {
       }
     } else {
       // FACULTY
-      const { error: facultyError } = await supabaseAdmin
+      const { data: newFacultyRow, error: facultyError } = await supabaseAdmin
         .from("faculty")
         .insert({
           user_id: userId,
@@ -113,9 +113,11 @@ export async function signUpAction(data: RegisterFormValues) {
           institution_opeid: institutionOpeId,
           title: title,
           department: department,
-        });
+        })
+        .select("id")
+        .single();
 
-      if (facultyError) {
+      if (facultyError || !newFacultyRow) {
         console.error("Faculty Insert Error:", facultyError);
         // ROLLBACK
         await supabaseAdmin.auth.admin.deleteUser(userId);
@@ -123,6 +125,19 @@ export async function signUpAction(data: RegisterFormValues) {
           success: false,
           error: "Failed to create faculty record.",
         };
+      }
+
+      // Claim any letter requests that were sent to this email address while
+      // the professor was not yet registered (status "invited", faculty_id null).
+      const { error: claimError } = await supabaseAdmin
+        .from("letter_requests")
+        .update({ faculty_id: newFacultyRow.id, status: "requested" })
+        .ilike("professor_email", email.trim())
+        .eq("status", "invited");
+
+      if (claimError) {
+        console.error("Failed to claim invited requests:", claimError);
+        // Non-fatal — registration still succeeds
       }
     }
 

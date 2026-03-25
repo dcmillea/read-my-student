@@ -20,10 +20,6 @@ const PROFILE_COLUMNS = [
   "postal_code",
   "street",
   "prefix",
-  "first_name",
-  "last_name",
-  "phone",
-  "email",
   "signature_storage_path",
   "logo_storage_path",
   "logo_uploaded_at",
@@ -143,6 +139,22 @@ export async function uploadFacultyAsset(
     .createSignedUrl(storagePath, 3600);
 
   return { success: true, storagePath, signedUrl: signedData?.signedUrl };
+}
+
+/**
+ * Generate a short-lived signed URL for an existing faculty asset storage path.
+ * Used to display saved logo/signature images without re-uploading.
+ */
+export async function getSignedAssetUrl(
+  storagePath: string,
+  assetType: "logo" | "signature",
+): Promise<string | null> {
+  const supabase = await createClient();
+  const bucket = assetType === "logo" ? BUCKET_LOGOS : BUCKET_SIGNATURES;
+  const { data } = await supabase.storage
+    .from(bucket)
+    .createSignedUrl(storagePath, 3600);
+  return data?.signedUrl ?? null;
 }
 
 /**

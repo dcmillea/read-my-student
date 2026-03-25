@@ -107,7 +107,7 @@ export async function POST(
 
   if (
     existingLink &&
-    ["pending_approval", "paid", "used"].includes(
+    ["pending", "paid", "used"].includes(
       existingLink.payment_status as string,
     )
   ) {
@@ -117,12 +117,13 @@ export async function POST(
     );
   }
 
-  // ── 5. Create Stripe Checkout Session ─────────────────────────────────────
+  // ── 5. Create Stripe Embedded Checkout Session ────────────────────────────
   const siteUrl =
     process.env.NEXT_PUBLIC_SITE_URL ?? "https://readmystudent.com";
 
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
+    ui_mode: "embedded",
     line_items: [
       {
         quantity: 1,
@@ -143,17 +144,17 @@ export async function POST(
       school_email: schoolEmail,
       student_user_id: user.id,
     },
-    success_url: `${siteUrl}/dashboard?payment=success`,
-    cancel_url: `${siteUrl}/dashboard?payment=cancelled`,
+    // Stripe redirects inside the iframe to this URL on success
+    return_url: `${siteUrl}/dashboard?payment=success`,
     customer_email: user.email,
   });
 
-  if (!session.url) {
+  if (!session.client_secret) {
     return NextResponse.json(
       { error: "Failed to create checkout session." },
       { status: 500 },
     );
   }
 
-  return NextResponse.json({ url: session.url });
+  return NextResponse.json({ clientSecret: session.client_secret });
 }
