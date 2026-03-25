@@ -33,11 +33,15 @@ export async function verifyEmail(
   const tokenHash = createHash("sha256").update(token).digest("hex");
 
   // Look up the delivery link
-  const { data: link } = await adminSupabase
+  const { data: link, error: dbError } = await adminSupabase
     .from("delivery_links")
     .select("id, payment_status, expires_at, recipient_email_hash")
     .eq("token_hash", tokenHash)
     .maybeSingle();
+
+  console.log("[verifyEmail] token:", token);
+  console.log("[verifyEmail] tokenHash:", tokenHash);
+  console.log("[verifyEmail] link:", link, "dbError:", dbError);
 
   if (!link) return { error: "This link is invalid or no longer active." };
 
