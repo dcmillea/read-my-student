@@ -197,16 +197,17 @@ export default async function ViewLetterPage({
     // If claimed is null, a race was lost — cookie holder still proceeds.
   }
 
-  // ── 6. Load letter + faculty ──────────────────────────────────────────────
+  // ── 6. Load letter ────────────────────────────────────────────────────────
   const { data: letter } = await adminSupabase
     .from("letters")
-    .select(
-      "storage_path, finalized_at, faculty:faculty_id(first_name, last_name, title)",
-    )
+    .select("storage_path, finalized_at, faculty_id")
     .eq("id", link.letter_id as string)
     .maybeSingle();
 
-  if (!letter?.storage_path) return <InvalidPage reason='not-found' />;
+  if (!letter?.storage_path) {
+    console.error("[view] letter missing storage_path for letter_id:", link.letter_id);
+    return <InvalidPage reason='not-found' />;
+  }
 
   // ── 7. Load signature metadata ────────────────────────────────────────────
   const { data: sig } = await adminSupabase
@@ -215,23 +216,25 @@ export default async function ViewLetterPage({
     .eq("letter_id", link.letter_id as string)
     .maybeSingle();
 
-  // ── 8. Resolve faculty display name ───────────────────────────────────────
-  const fRaw = letter.faculty as unknown as
-    | {
-        first_name: string | null;
-        last_name: string | null;
-        title: string | null;
-      }[]
-    | {
-        first_name: string | null;
-        last_name: string | null;
-        title: string | null;
-      }
-    | null;
-  const f = Array.isArray(fRaw) ? (fRaw[0] ?? null) : fRaw;
-  const facultyName =
-    [f?.title, f?.first_name, f?.last_name].filter(Boolean).join(" ") ||
-    "Faculty";
+  // ── 8. Resolve faculty display name via auth user metadata ────────────────
+  let facultyName = "Faculty";
+  const facultyId = letter.faculty_id as string | null;
+  if (facultyId) {
+    const { data: facultyRow } = await adminSupabase
+      .from("faculty")
+      .select("user_id")
+      .eq("id", facultyId)
+      .maybeSingle();
+    if (facultyRow?.user_id) {
+      const { data: facultyAuth } = await adminSupabase.auth.admin.getUserById(
+        facultyRow.user_id as string,
+      );
+      const meta = facultyAuth?.user?.user_metadata ?? {};
+      facultyName =
+        [meta.title, meta.firstName, meta.lastName].filter(Boolean).join(" ") ||
+        "Faculty";
+    }
+  }
 
   // ── 9. Resolve student display name ───────────────────────────────────────
   let studentFullName = "Applicant";
@@ -249,7 +252,10 @@ export default async function ViewLetterPage({
     .from("letters")
     .createSignedUrl(letter.storage_path as string, 3600); // 1-hour TTL
 
-  if (!signedData?.signedUrl) return <InvalidPage reason='not-found' />;
+  if (!signedData?.signedUrl) {
+    console.error("[view] createSignedUrl failed for storage_path:", letter.storage_path);
+    return <InvalidPage reason='not-found' />;
+  }
 
   const pdfUrl = signedData.signedUrl;
   const finalizedDate = letter.finalized_at

@@ -98,24 +98,24 @@ export async function POST(
     .update(schoolEmail)
     .digest("hex");
 
-  const { data: existingLink } = await adminSupabase
-    .from("delivery_links")
-    .select("id, payment_status")
-    .eq("letter_id", letterId)
-    .eq("recipient_email_hash", schoolEmailHash)
-    .maybeSingle();
+  // const { data: existingLink } = await adminSupabase
+  //   .from("delivery_links")
+  //   .select("id, payment_status")
+  //   .eq("letter_id", letterId)
+  //   .eq("recipient_email_hash", schoolEmailHash)
+  //   .maybeSingle();
 
-  if (
-    existingLink &&
-    ["pending", "paid", "used"].includes(
-      existingLink.payment_status as string,
-    )
-  ) {
-    return NextResponse.json(
-      { error: "This letter has already been sent to that institution." },
-      { status: 409 },
-    );
-  }
+  // if (
+  //   existingLink &&
+  //   ["pending", "paid", "used"].includes(
+  //     existingLink.payment_status as string,
+  //   )
+  // ) {
+  //   return NextResponse.json(
+  //     { error: "This letter has already been sent to that institution." },
+  //     { status: 409 },
+  //   );
+  // }
 
   // ── 5. Create Stripe Embedded Checkout Session ────────────────────────────
   const siteUrl =

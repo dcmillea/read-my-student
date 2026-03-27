@@ -935,11 +935,19 @@ export async function approveDelivery(
     });
     if (emailError) {
       console.error("[approveDelivery] Resend failed:", emailError);
-      return { error: `Delivery approved but email failed: ${emailError.message}` };
+      return {
+        error: `Delivery approved but email failed: ${emailError.message}`,
+      };
     }
   } else {
-    console.error("[approveDelivery] No recipient email found for delivery link", deliveryLinkId);
-    return { error: "Delivery approved but could not retrieve the institution email from Stripe." };
+    console.error(
+      "[approveDelivery] No recipient email found for delivery link",
+      deliveryLinkId,
+    );
+    return {
+      error:
+        "Delivery approved but could not retrieve the institution email from Stripe.",
+    };
   }
 
   return { error: null };
@@ -1094,8 +1102,7 @@ export async function getStudentLetterPreview(
   if (!letter.student_preview_enabled) return null;
 
   // Signature and logo assets are intentionally withheld from student previews
-  // to protect the professor's signature from being extracted. The preview
-  // renders a "Signature on file" placeholder instead.
+  // to protect the professor's signature from being extracted.
   return {
     html: letter.letter_body_html as string | null,
     recommenderSnapshot: letter.recommender_snapshot as RecommenderForm | null,

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { Toaster } from "sonner";
 import Footer from "@/components/marketing/Footer";
 
 const geistSans = Geist({
@@ -75,6 +76,7 @@ export default function RootLayout({
       >
         {children}
         <Footer />
+        <Toaster richColors position='top-center' />
       </body>
     </html>
   );

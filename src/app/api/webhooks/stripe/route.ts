@@ -151,9 +151,13 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   // ── d. Hash the recipient email — plaintext is never stored ─────────────
   // The hash is used for email-gate verification on the /view/[token] page.
   // The plaintext is retrieved from Stripe session metadata at approval time.
+  const normalizedSchoolEmail = school_email.toLowerCase().trim();
   const recipientEmailHash = createHash("sha256")
-    .update(school_email.toLowerCase().trim())
+    .update(normalizedSchoolEmail)
     .digest("hex");
+  console.log("[webhook] school_email (raw):", school_email);
+  console.log("[webhook] school_email (normalized):", normalizedSchoolEmail);
+  console.log("[webhook] school_email hash:", recipientEmailHash);
 
   // NOTE: No delivery token is generated here.
   // The token is created only when faculty approves, so we can include it in

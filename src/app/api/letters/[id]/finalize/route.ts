@@ -68,6 +68,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id: letterId } = await params;
+  const body = await req.json().catch(() => ({})) as { requestId?: string; regenerate?: boolean };
 
   // ── 1. Authenticate ──────────────────────────────────────────────────────────
   const supabase = await createClient();
@@ -111,10 +112,24 @@ export async function POST(
   }
 
   if (!letter.is_draft) {
-    return NextResponse.json(
-      { error: "Letter is already finalized." },
-      { status: 409 },
-    );
+    // Allow regeneration only if no active delivery links exist (not yet delivered)
+    if (!body.regenerate) {
+      return NextResponse.json(
+        { error: "Letter is already finalized." },
+        { status: 409 },
+      );
+    }
+    const { count } = await adminSupabase
+      .from("delivery_links")
+      .select("id", { count: "exact", head: true })
+      .eq("letter_id", letterId)
+      .in("payment_status", ["pending", "paid", "used"]);
+    if ((count ?? 0) > 0) {
+      return NextResponse.json(
+        { error: "Cannot regenerate PDF: letter has already been delivered." },
+        { status: 409 },
+      );
+    }
   }
 
   // ── 4. Fetch images as base64 data URIs ──────────────────────────────────────
@@ -231,7 +246,13 @@ export async function POST(
     );
   }
 
-  // ── 10. Insert letter_signatures row ─────────────────────────────────────────
+  // ── 10. Insert letter_signatures row (delete stale row first on regeneration) ──
+  if (body.regenerate) {
+    await adminSupabase
+      .from("letter_signatures")
+      .delete()
+      .eq("letter_id", letterId);
+  }
   const { error: sigError } = await adminSupabase
     .from("letter_signatures")
     .insert({
@@ -248,7 +269,15 @@ export async function POST(
     console.error("[finalize] Signature insert error:", sigError);
   }
 
-  // ── 11. Respond ───────────────────────────────────────────────────────────────
+  // ── 11. Advance letter_requests status so student can proceed to payment ─────
+  if (body.requestId) {
+    await adminSupabase
+      .from("letter_requests")
+      .update({ status: "in_progress" })
+      .eq("id", body.requestId);
+  }
+
+  // ── 12. Respond ───────────────────────────────────────────────────────────────
   return NextResponse.json({
     success: true,
     pdfStoragePath,

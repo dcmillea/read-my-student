@@ -28,8 +28,14 @@ function LetterRender({ preview }: { preview: StudentLetterPreview }) {
   const stamps = Array.from({ length: 40 });
 
   return (
-    <div style={{ position: "relative", backgroundColor: "#ffffff", fontFamily: "Georgia, serif", color: "#1f2937" }}>
-
+    <div
+      style={{
+        position: "relative",
+        backgroundColor: "#ffffff",
+        fontFamily: "Georgia, serif",
+        color: "#1f2937",
+      }}
+    >
       {/* Watermark overlay */}
       <div
         aria-hidden
@@ -45,8 +51,26 @@ function LetterRender({ preview }: { preview: StudentLetterPreview }) {
         }}
       >
         {stamps.map((_, i) => (
-          <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "center", transform: "rotate(-35deg)" }}>
-            <span style={{ userSelect: "none", whiteSpace: "nowrap", fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(0,0,0,0.07)" }}>
+          <div
+            key={i}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              transform: "rotate(-35deg)",
+            }}
+          >
+            <span
+              style={{
+                userSelect: "none",
+                whiteSpace: "nowrap",
+                fontSize: "11px",
+                fontWeight: "bold",
+                textTransform: "uppercase",
+                letterSpacing: "0.1em",
+                color: "rgba(0,0,0,0.07)",
+              }}
+            >
               PREVIEW ONLY
             </span>
           </div>
@@ -54,35 +78,89 @@ function LetterRender({ preview }: { preview: StudentLetterPreview }) {
       </div>
 
       {/* Simplified letterhead — no logo, address, or phone */}
-      <div style={{ borderBottom: "1px dashed rgba(0,0,0,0.1)", paddingBottom: "16px", marginBottom: "4px" }}>
-        <p style={{ fontSize: "14px", fontWeight: "600", color: "#14532d", margin: "0 0 2px" }}>
-          {[snap?.prefix, snap?.firstName, snap?.lastName].filter(Boolean).join(" ")}
+      <div
+        style={{
+          borderBottom: "1px dashed rgba(0,0,0,0.1)",
+          paddingBottom: "16px",
+          marginBottom: "4px",
+        }}
+      >
+        <p
+          style={{
+            fontSize: "14px",
+            fontWeight: "600",
+            color: "#14532d",
+            margin: "0 0 2px",
+          }}
+        >
+          {[snap?.prefix, snap?.firstName, snap?.lastName]
+            .filter(Boolean)
+            .join(" ")}
         </p>
-        {snap?.title && <p style={{ fontSize: "12px", color: "#6b7280", margin: "0 0 2px" }}>{snap.title}</p>}
-        {snap?.organization && <p style={{ fontSize: "12px", color: "#6b7280", margin: "0 0 2px" }}>{snap.organization}</p>}
-        {snap?.department && <p style={{ fontSize: "12px", color: "#6b7280", margin: "0" }}>{snap.department}</p>}
+        {snap?.title && (
+          <p style={{ fontSize: "12px", color: "#6b7280", margin: "0 0 2px" }}>
+            {snap.title}
+          </p>
+        )}
+        {snap?.organization && (
+          <p style={{ fontSize: "12px", color: "#6b7280", margin: "0 0 2px" }}>
+            {snap.organization}
+          </p>
+        )}
+        {snap?.department && (
+          <p style={{ fontSize: "12px", color: "#6b7280", margin: "0" }}>
+            {snap.department}
+          </p>
+        )}
       </div>
 
       {/* Body */}
       {preview.html ? (
         <div
-          style={{ marginTop: "24px", fontSize: "14px", lineHeight: "1.7", color: "#374151" }}
+          style={{
+            marginTop: "24px",
+            fontSize: "14px",
+            lineHeight: "1.7",
+            color: "#374151",
+          }}
           dangerouslySetInnerHTML={{ __html: preview.html }}
         />
       ) : (
-        <p style={{ marginTop: "24px", fontSize: "14px", color: "#9ca3af" }}>No letter content.</p>
+        <p style={{ marginTop: "24px", fontSize: "14px", color: "#9ca3af" }}>
+          No letter content.
+        </p>
       )}
 
       {/* Sign-off + signature placeholder */}
-      <div style={{ marginTop: "32px", display: "flex", flexDirection: "column", gap: "6px" }}>
-        <p style={{ fontSize: "14px", color: "#4b5563", margin: "0" }}>{snap?.signOff ?? "Sincerely,"}</p>
-        <p style={{ fontSize: "12px", fontStyle: "italic", color: "#9ca3af", margin: "0" }}>[ Signature on file ]</p>
-        <p style={{ fontSize: "12px", fontWeight: "600", color: "#374151", margin: "0" }}>
-          {[snap?.prefix, snap?.firstName, snap?.lastName].filter(Boolean).join(" ")}
+      <div
+        style={{
+          marginTop: "32px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "6px",
+        }}
+      >
+        <p style={{ fontSize: "14px", color: "#4b5563", margin: "0" }}>
+          {snap?.signOff ?? "Sincerely,"}
         </p>
-        {snap?.title && <p style={{ fontSize: "11px", color: "#6b7280", margin: "0" }}>{snap.title}</p>}
+        <p
+          style={{
+            fontSize: "12px",
+            fontWeight: "600",
+            color: "#374151",
+            margin: "0",
+          }}
+        >
+          {[snap?.prefix, snap?.firstName, snap?.lastName]
+            .filter(Boolean)
+            .join(" ")}
+        </p>
+        {snap?.title && (
+          <p style={{ fontSize: "11px", color: "#6b7280", margin: "0" }}>
+            {snap.title}
+          </p>
+        )}
       </div>
-
     </div>
   );
 }

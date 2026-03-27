@@ -8,7 +8,6 @@
  * to make outbound HTTP requests at PDF-build time.
  */
 
-import React from "react";
 import {
   Document,
   Page,
@@ -166,10 +165,20 @@ export function LetterDocument({
         {/* ── Letterhead ── */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            {logoDataUri && <PdfImage style={styles.logo} src={logoDataUri} />}
+            {logoDataUri && (
+              <PdfImage style={styles.logo} src={logoDataUri} />
+            )}
             <View>
               {recommender.department ? (
-                <Text style={styles.department}>{recommender.department}</Text>
+                <Text style={styles.department}>
+                  {recommender.department}
+                </Text>
+              ) : null}
+              {fullName ? (
+                <Text style={styles.signerName}>{fullName}</Text>
+              ) : null}
+              {recommender.title ? (
+                <Text style={styles.signerMeta}>{recommender.title}</Text>
               ) : null}
             </View>
           </View>
@@ -179,14 +188,13 @@ export function LetterDocument({
                 {line}
               </Text>
             ))}
+            {/* Date in header right for visual balance */}
+            <Text style={styles.date}>{date}</Text>
           </View>
         </View>
 
         {/* ── Divider ── */}
         <View style={styles.divider} />
-
-        {/* ── Date ── */}
-        <Text style={styles.date}>{date}</Text>
 
         {/* ── Letter body ── */}
         {paragraphs.map((para, i) => (
@@ -201,62 +209,19 @@ export function LetterDocument({
             {recommender.signOff || "Sincerely,"}
           </Text>
           {signatureDataUri && (
-            <PdfImage style={styles.signatureImage} src={signatureDataUri} />
+            <PdfImage
+              style={styles.signatureImage}
+              src={signatureDataUri}
+            />
           )}
-          {fullName ? <Text style={styles.signerName}>{fullName}</Text> : null}
-          return (
-            <Document>
-              <Page size='LETTER' style={styles.page}>
-                {/* ── Letterhead ── */}
-                <View style={styles.header}>
-                  <View style={styles.headerLeft}>
-                    {logoDataUri && <PdfImage style={styles.logo} src={logoDataUri} />}
-                    <View>
-                      {recommender.department ? (
-                        <Text style={styles.department}>{recommender.department}</Text>
-                      ) : null}
-                      {fullName ? (
-                        <Text style={styles.signerName}>{fullName}</Text>
-                      ) : null}
-                      {recommender.title ? (
-                        <Text style={styles.signerMeta}>{recommender.title}</Text>
-                      ) : null}
-                    </View>
-                  </View>
-                  <View style={styles.headerRight}>
-                    {addressLines.map((line, i) => (
-                      <Text key={i} style={styles.addressLine}>
-                        {line}
-                      </Text>
-                    ))}
-                    {/* Date in header right for visual balance */}
-                    <Text style={styles.date}>{date}</Text>
-                  </View>
-                </View>
-
-                {/* ── Divider ── */}
-                <View style={styles.divider} />
-
-                {/* ── Letter body ── */}
-                {paragraphs.map((para, i) => (
-                  <Text key={i} style={styles.paragraph}>
-                    {para}
-                  </Text>
-                ))}
-
-                {/* ── Closing block ── */}
-                <View style={styles.closing}>
-                  <Text style={styles.signOff}>
-                    {recommender.signOff || "Sincerely,"}
-                  </Text>
-                  {signatureDataUri && (
-                    <PdfImage style={styles.signatureImage} src={signatureDataUri} />
-                  )}
-                  {fullName ? <Text style={styles.signerName}>{fullName}</Text> : null}
-                  {recommender.title ? (
-                    <Text style={styles.signerMeta}>{recommender.title}</Text>
-                  ) : null}
-                </View>
-              </Page>
-            </Document>
-          );
+          {fullName ? (
+            <Text style={styles.signerName}>{fullName}</Text>
+          ) : null}
+          {recommender.title ? (
+            <Text style={styles.signerMeta}>{recommender.title}</Text>
+          ) : null}
+        </View>
+      </Page>
+    </Document>
+  );
+}

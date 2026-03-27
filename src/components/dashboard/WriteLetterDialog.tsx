@@ -25,7 +25,6 @@ import { LetterEditor } from "@/components/dashboard/LetterEditor";
 import {
   saveDraft,
   loadDraft,
-  finalizeLetter,
   setStudentPreviewEnabled as setPreviewEnabledAction,
 } from "@/app/actions/letters";
 import { uploadFacultyAsset, getSignedAssetUrl } from "@/app/actions/faculty";
@@ -37,6 +36,8 @@ export function WriteLetterDialog({
   savedProfile,
   savedSignatureUrl,
   savedLogoUrl,
+  savedLogoStoragePath,
+  savedSignatureStoragePath,
   onSaveProfile,
   onDraftSaved,
   onFinalized,
@@ -48,6 +49,8 @@ export function WriteLetterDialog({
   savedProfile?: RecommenderProfile;
   savedSignatureUrl?: string | null;
   savedLogoUrl?: string | null;
+  savedLogoStoragePath?: string | null;
+  savedSignatureStoragePath?: string | null;
   onSaveProfile?: (
     form: RecommenderForm,
   ) => Promise<{ success: boolean; error?: string }>;
@@ -99,10 +102,13 @@ export function WriteLetterDialog({
     string | null
   >(null);
   // Raw storage paths (distinct from signed display URLs stored in logoDataUrl/signatureDataUrl)
-  const [logoStoragePath, setLogoStoragePath] = useState<string | null>(null);
+  // Pre-populated from profile so the finalize route can fetch images even if no new file is uploaded.
+  const [logoStoragePath, setLogoStoragePath] = useState<string | null>(
+    savedLogoStoragePath ?? null,
+  );
   const [signatureStoragePath, setSignatureStoragePath] = useState<
     string | null
-  >(null);
+  >(savedSignatureStoragePath ?? null);
 
   // Draft save / autosave state
   const [isSavingDraft, setIsSavingDraft] = useState(false);
@@ -188,12 +194,8 @@ export function WriteLetterDialog({
         letterHtml,
         letterPlainText,
         letterEditorState,
-        // Use uploaded storage paths; fall back to the currently loaded saved URLs
-        logoStoragePath:
-          logoStoragePath ?? (logoFile ? null : (logoDataUrl ?? null)),
-        signatureStoragePath:
-          signatureStoragePath ??
-          (signatureFile ? null : (signatureDataUrl ?? null)),
+        logoStoragePath: logoStoragePath ?? null,
+        signatureStoragePath: signatureStoragePath ?? null,
       });
       if (!silent) setIsSavingDraft(false);
       if (!result.success) {
@@ -224,16 +226,27 @@ export function WriteLetterDialog({
   handleSaveDraftRef.current = handleSaveDraft;
 
   const handleFinalize = async () => {
-    if (!requestId) return;
+    if (!requestId || !letterDbId) return;
     setIsFinalizing(true);
     setFinalizeError(null);
     // Persist any unsaved changes before sealing
     await handleSaveDraft(true);
-    const result = await finalizeLetter(requestId);
-    setIsFinalizing(false);
-    if (!result.success) {
-      setFinalizeError(result.error ?? "Failed to finalize letter.");
+    try {
+      const res = await fetch(`/api/letters/${letterDbId}/finalize`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requestId }),
+      });
+      const data = (await res.json()) as { success?: boolean; error?: string };
+      if (!res.ok || !data.success) {
+        setFinalizeError(data.error ?? "Failed to finalize letter.");
+        return;
+      }
+    } catch {
+      setFinalizeError("Network error while finalizing. Please try again.");
       return;
+    } finally {
+      setIsFinalizing(false);
     }
     setShowFinalizeConfirm(false);
     setIsDirty(false);
@@ -448,6 +461,8 @@ export function WriteLetterDialog({
               setRecommenderForm(buildRecommenderForm(savedProfile));
             setSignatureDataUrl(savedSignatureUrl ?? null);
             setLogoDataUrl(savedLogoUrl ?? null);
+            setLogoStoragePath(savedLogoStoragePath ?? null);
+            setSignatureStoragePath(savedSignatureStoragePath ?? null);
 
             // Load draft from DB (overrides profile baseline if a draft exists)
             if (requestId) {
@@ -600,24 +615,28 @@ export function WriteLetterDialog({
                           label: "Position / Title",
                           placeholder: "Professor",
                           field: "title",
+                          required: true,
                         },
                         {
                           id: "first-name",
                           label: "First Name",
                           placeholder: "First name",
                           field: "firstName",
+                          required: true,
                         },
                         {
                           id: "last-name",
                           label: "Last Name",
                           placeholder: "Last name",
                           field: "lastName",
+                          required: true,
                         },
                         {
                           id: "organization",
                           label: "Organization",
                           placeholder: "University name",
                           field: "organization",
+                          required: true,
                         },
                         {
                           id: "department",
@@ -630,6 +649,7 @@ export function WriteLetterDialog({
                           label: "Relationship",
                           placeholder: "Professor, Advisor, Mentor",
                           field: "relationship",
+                          required: true,
                         },
                         {
                           id: "recommender-email",
@@ -637,6 +657,7 @@ export function WriteLetterDialog({
                           placeholder: "faculty@university.edu",
                           field: "email",
                           type: "email",
+                          required: true,
                         },
                         {
                           id: "recommender-phone",
@@ -650,15 +671,19 @@ export function WriteLetterDialog({
                         placeholder: string;
                         field: keyof RecommenderForm;
                         type?: string;
+                        required?: boolean;
                       }>
-                    ).map(({ id, label, placeholder, field, type }) => (
+                    ).map(({ id, label, placeholder, field, type, required }) => (
                       <div key={id} className='grid gap-2'>
-                        <Label htmlFor={id}>{label}</Label>
+                        <Label htmlFor={id}>
+                          {label}
+                          {required && <span className='ml-0.5 text-red-500'>*</span>}
+                        </Label>
                         <Input
                           id={id}
                           type={type ?? "text"}
                           placeholder={placeholder}
-                          className='rounded-xl'
+                          className={`rounded-xl${required && !recommenderForm[field].trim() ? " border-red-300 focus-visible:ring-red-300" : ""}`}
                           value={recommenderForm[field]}
                           onChange={(e) =>
                             handleRecommenderChange(field, e.target.value)
@@ -669,11 +694,11 @@ export function WriteLetterDialog({
                   </div>
                   <div className='grid gap-4 sm:grid-cols-3'>
                     <div className='grid gap-2'>
-                      <Label htmlFor='country'>Country</Label>
+                      <Label htmlFor='country'>Country<span className='ml-0.5 text-red-500'>*</span></Label>
                       <Input
                         id='country'
                         placeholder='United States'
-                        className='rounded-xl'
+                        className={`rounded-xl${!recommenderForm.country.trim() ? " border-red-300 focus-visible:ring-red-300" : ""}`}
                         value={recommenderForm.country}
                         onChange={(e) =>
                           handleRecommenderChange("country", e.target.value)
@@ -681,11 +706,11 @@ export function WriteLetterDialog({
                       />
                     </div>
                     <div className='grid gap-2 sm:col-span-2'>
-                      <Label htmlFor='street'>Street</Label>
+                      <Label htmlFor='street'>Street<span className='ml-0.5 text-red-500'>*</span></Label>
                       <Input
                         id='street'
                         placeholder='123 University Ave'
-                        className='rounded-xl'
+                        className={`rounded-xl${!recommenderForm.street.trim() ? " border-red-300 focus-visible:ring-red-300" : ""}`}
                         value={recommenderForm.street}
                         onChange={(e) =>
                           handleRecommenderChange("street", e.target.value)
@@ -693,11 +718,11 @@ export function WriteLetterDialog({
                       />
                     </div>
                     <div className='grid gap-2'>
-                      <Label htmlFor='city'>City</Label>
+                      <Label htmlFor='city'>City<span className='ml-0.5 text-red-500'>*</span></Label>
                       <Input
                         id='city'
                         placeholder='City'
-                        className='rounded-xl'
+                        className={`rounded-xl${!recommenderForm.city.trim() ? " border-red-300 focus-visible:ring-red-300" : ""}`}
                         value={recommenderForm.city}
                         onChange={(e) =>
                           handleRecommenderChange("city", e.target.value)
@@ -705,11 +730,11 @@ export function WriteLetterDialog({
                       />
                     </div>
                     <div className='grid gap-2'>
-                      <Label htmlFor='state'>State / Province</Label>
+                      <Label htmlFor='state'>State / Province<span className='ml-0.5 text-red-500'>*</span></Label>
                       <Input
                         id='state'
                         placeholder='State'
-                        className='rounded-xl'
+                        className={`rounded-xl${!recommenderForm.state.trim() ? " border-red-300 focus-visible:ring-red-300" : ""}`}
                         value={recommenderForm.state}
                         onChange={(e) =>
                           handleRecommenderChange("state", e.target.value)
@@ -717,11 +742,11 @@ export function WriteLetterDialog({
                       />
                     </div>
                     <div className='grid gap-2'>
-                      <Label htmlFor='postal'>Postal Code</Label>
+                      <Label htmlFor='postal'>Postal Code<span className='ml-0.5 text-red-500'>*</span></Label>
                       <Input
                         id='postal'
                         placeholder='Postal code'
-                        className='rounded-xl'
+                        className={`rounded-xl${!recommenderForm.postalCode.trim() ? " border-red-300 focus-visible:ring-red-300" : ""}`}
                         value={recommenderForm.postalCode}
                         onChange={(e) =>
                           handleRecommenderChange("postalCode", e.target.value)
@@ -1239,34 +1264,55 @@ export function WriteLetterDialog({
             </div>
             <div className='flex flex-col gap-2 sm:flex-row'>
               {step === "details" && (
-                <Button
-                  type='button'
-                  className='rounded-xl bg-green-900 hover:bg-[#093820]'
-                  onClick={() => setStep("letterhead")}
-                  disabled={!isDetailsComplete}
-                >
-                  Continue to Letterhead
-                </Button>
+                <div className='flex flex-col items-end gap-1'>
+                  {footerHint && (
+                    <span className='text-xs font-semibold text-amber-700'>
+                      {footerHint}
+                    </span>
+                  )}
+                  <Button
+                    type='button'
+                    className='rounded-xl bg-green-900 hover:bg-[#093820]'
+                    onClick={() => setStep("letterhead")}
+                    disabled={!isDetailsComplete}
+                  >
+                    Continue to Letterhead
+                  </Button>
+                </div>
               )}
               {step === "letterhead" && (
-                <Button
-                  type='button'
-                  className='rounded-xl bg-green-900 hover:bg-[#093820]'
-                  onClick={() => setStep("letter")}
-                  disabled={!isLetterheadReady}
-                >
-                  Continue to Letter
-                </Button>
+                <div className='flex flex-col items-end gap-1'>
+                  {footerHint && (
+                    <span className='text-xs font-semibold text-amber-700'>
+                      {footerHint}
+                    </span>
+                  )}
+                  <Button
+                    type='button'
+                    className='rounded-xl bg-green-900 hover:bg-[#093820]'
+                    onClick={() => setStep("letter")}
+                    disabled={!isLetterheadReady}
+                  >
+                    Continue to Letter
+                  </Button>
+                </div>
               )}
               {step === "letter" && (
-                <Button
-                  type='button'
-                  className='rounded-xl bg-green-900 hover:bg-[#093820]'
-                  onClick={() => setStep("preview")}
-                  disabled={!isLetterComplete}
-                >
-                  Review Preview
-                </Button>
+                <div className='flex flex-col items-end gap-1'>
+                  {footerHint && (
+                    <span className='text-xs font-semibold text-amber-700'>
+                      {footerHint}
+                    </span>
+                  )}
+                  <Button
+                    type='button'
+                    className='rounded-xl bg-green-900 hover:bg-[#093820]'
+                    onClick={() => setStep("preview")}
+                    disabled={!isLetterComplete}
+                  >
+                    Review Preview
+                  </Button>
+                </div>
               )}
               {step === "preview" && (
                 <>

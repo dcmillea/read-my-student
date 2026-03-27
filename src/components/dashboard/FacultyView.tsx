@@ -45,7 +45,7 @@ import {
   type FacultyLetterRequest,
   type FacultyFinalizedLetter,
 } from "@/app/actions/letters";
-import { getFacultyProfile, saveFacultyProfile } from "@/app/actions/faculty";
+import { getFacultyProfile, saveFacultyProfile, getSignedAssetUrl } from "@/app/actions/faculty";
 import type { FacultyProfileRow, RecommenderForm } from "@/lib/faculty-profile";
 import { dbRowToProfile } from "@/lib/faculty-profile";
 
@@ -60,6 +60,10 @@ export function FacultyView() {
   const [loadingRequests, setLoadingRequests] = useState(true);
   const [facultyProfile, setFacultyProfile] =
     useState<FacultyProfileRow | null>(null);
+  const [savedLogoUrl, setSavedLogoUrl] = useState<string | null>(null);
+  const [savedSignatureUrl, setSavedSignatureUrl] = useState<string | null>(null);
+  const [savedLogoStoragePath, setSavedLogoStoragePath] = useState<string | null>(null);
+  const [savedSignatureStoragePath, setSavedSignatureStoragePath] = useState<string | null>(null);
   const [authEmail, setAuthEmail] = useState<string | null>(null);
   const [authFirstName, setAuthFirstName] = useState<string | null>(null);
   const [authLastName, setAuthLastName] = useState<string | null>(null);
@@ -115,7 +119,17 @@ export function FacultyView() {
       .then(setLetterRequests)
       .finally(() => setLoadingRequests(false));
 
-    getFacultyProfile().then(setFacultyProfile);
+    getFacultyProfile().then(async (profile) => {
+      setFacultyProfile(profile);
+      if (profile?.logo_storage_path) {
+        setSavedLogoStoragePath(profile.logo_storage_path);
+        getSignedAssetUrl(profile.logo_storage_path, "logo").then(setSavedLogoUrl);
+      }
+      if (profile?.signature_storage_path) {
+        setSavedSignatureStoragePath(profile.signature_storage_path);
+        getSignedAssetUrl(profile.signature_storage_path, "signature").then(setSavedSignatureUrl);
+      }
+    });
 
     // Fetch auth email for profile autofill
     const supabase = createBrowserClient();
@@ -383,6 +397,10 @@ export function FacultyView() {
                                 )
                               : undefined
                           }
+                          savedLogoUrl={savedLogoUrl}
+                          savedSignatureUrl={savedSignatureUrl}
+                          savedLogoStoragePath={savedLogoStoragePath}
+                          savedSignatureStoragePath={savedSignatureStoragePath}
                           onSaveProfile={handleSaveProfile}
                           onDraftSaved={() =>
                             getFacultyRequests().then(setLetterRequests)

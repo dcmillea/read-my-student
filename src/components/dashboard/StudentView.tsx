@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
 import { SendToSchoolDialog } from "@/components/dashboard/SendToSchoolDialog";
 import { LetterPreviewDialog } from "@/components/dashboard/LetterPreviewDialog";
 
@@ -45,11 +46,21 @@ export function StudentView() {
   const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
 
-  // Show a banner if returning from Stripe
-  const paymentStatus =
-    typeof window !== "undefined"
-      ? new URLSearchParams(window.location.search).get("payment")
-      : null;
+  // Show a toast and clean the URL if returning from Stripe
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const paymentStatus = params.get("payment");
+    if (paymentStatus === "success") {
+      toast.success("Payment successful! Your professor has been notified and your delivery link has been generated.");
+    } else if (paymentStatus === "cancelled") {
+      toast.info("Payment cancelled — no charge was made.");
+    }
+    if (paymentStatus) {
+      params.delete("payment");
+      const newUrl = [window.location.pathname, params.toString()].filter(Boolean).join("?");
+      window.history.replaceState({}, "", newUrl);
+    }
+  }, []);
 
   useEffect(() => {
     async function load() {
@@ -103,18 +114,7 @@ export function StudentView() {
             </CardDescription>
           </CardHeader>
           <CardContent className='space-y-4'>
-            {paymentStatus === "success" && (
-              <div className='rounded-xl bg-green-50 p-3 text-sm text-green-800'>
-                ✅ Payment successful! Your professor has been notified and your
-                delivery link has been generated.
-              </div>
-            )}
-            {paymentStatus === "cancelled" && (
-              <div className='rounded-xl bg-amber-50 p-3 text-sm text-amber-800'>
-                Payment cancelled — no charge was made.
-              </div>
-            )}
-            {result?.status === "requested" && (
+{result?.status === "requested" && (
               <div className='rounded-xl bg-green-50 p-3 text-sm text-green-800'>
                 ✅ Request sent! Your professor has been notified and will see
                 it in their dashboard.

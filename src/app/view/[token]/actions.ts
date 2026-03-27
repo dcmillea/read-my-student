@@ -33,15 +33,11 @@ export async function verifyEmail(
   const tokenHash = createHash("sha256").update(token).digest("hex");
 
   // Look up the delivery link
-  const { data: link, error: dbError } = await adminSupabase
+  const { data: link } = await adminSupabase
     .from("delivery_links")
     .select("id, payment_status, expires_at, recipient_email_hash")
     .eq("token_hash", tokenHash)
     .maybeSingle();
-
-  console.log("[verifyEmail] token:", token);
-  console.log("[verifyEmail] tokenHash:", tokenHash);
-  console.log("[verifyEmail] link:", link, "dbError:", dbError);
 
   if (!link) return { error: "This link is invalid or no longer active." };
 
@@ -60,10 +56,19 @@ export async function verifyEmail(
   }
 
   // Hash the submitted email and compare against the stored hash
+  const normalizedSubmittedEmail = email.toLowerCase().trim();
   const submittedHash = createHash("sha256")
-    .update(email.toLowerCase().trim())
+    .update(normalizedSubmittedEmail)
     .digest("hex");
   const storedHash = (link.recipient_email_hash as string | null) ?? "";
+
+  console.log("[verifyEmail] submitted email (raw):", email);
+  console.log(
+    "[verifyEmail] submitted email (normalized):",
+    normalizedSubmittedEmail,
+  );
+  console.log("[verifyEmail] submitted email hash:", submittedHash);
+  console.log("[verifyEmail] stored recipient_email_hash:", storedHash);
 
   if (!storedHash || storedHash !== submittedHash) {
     return {
